@@ -112,12 +112,17 @@ async function verifyProblem(name, slot) {
   const testP = runRetry(ZIG, ['test', 'solution.zig', '-lc'], dir, envFor(slot, 'test'));
 
   let ccP = null;
+  let ccObj = null;
   try {
     translate(dir);
     log(green('  [2/3] zig2c ok'));
     const driver = fs.existsSync(path.join(dir, 'driver.c')) ? 'driver.c' : null;
     if (!driver) {
-      ccP = run(ZIG, ['cc', '-std=c11', '-fsyntax-only', 'leetcode.c'], dir, envFor(slot, 'cc'));
+      // No driver to run, so just prove the generated C compiles. Note:
+      // `zig cc -fsyntax-only` is unusable here (zig still expects an object),
+      // so compile to a throwaway object outside the problem directory.
+      ccObj = path.join(os.tmpdir(), 'zig2c-cache', `w${slot}-check.obj`);
+      ccP = run(ZIG, ['cc', '-std=c11', '-c', '-o', ccObj, 'leetcode.c'], dir, envFor(slot, 'cc'));
     } else {
       ccP = runRetry(ZIG, ['cc', '-O2', '-Wall', '-Wextra', '-std=c11', '-DZIG2C_LOCAL=1', '-o', EXE, driver], dir, envFor(slot, 'cc'));
     }
@@ -134,8 +139,9 @@ async function verifyProblem(name, slot) {
 
   const hasDriver = fs.existsSync(path.join(dir, 'driver.c'));
   if (!hasDriver) {
-    if (cc.code !== 0) { ok = false; log(red('  [3/3] C syntax check FAILED')); log(indent(cc.out)); }
-    else log(green('  [3/3] C syntax ok (no driver.c)'));
+    try { if (ccObj) fs.rmSync(ccObj, { force: true }); } catch { /* ignore */ }
+    if (cc.code !== 0) { ok = false; log(red('  [3/3] C compile FAILED')); log(indent(cc.out)); }
+    else log(green('  [3/3] generated C compiles (no driver.c to run)'));
     return { ok, lines };
   }
   if (cc.code !== 0) { ok = false; log(red('  [3/3] C compile FAILED')); log(indent(cc.out)); sweep(dir); return { ok, lines }; }
