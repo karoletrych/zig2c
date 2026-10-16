@@ -322,18 +322,22 @@ class Parser {
       return ptr(this.parseType(), { isConst, ptrKind: 'single' });
     }
     if (this.eat('[')) {
+      // optional sentinel:  [:0]T   [*:0]T   [N:0]T
+      if (this.at(':')) { this.next(); this.parseExpr(); }
       if (this.eat(']')) {
         const isConst = this.eatId('const');
         return slice(this.parseType(), { isConst });
       }
       if (this.eat('*')) {
         let ptrKind = 'many';
+        if (this.at(':')) { this.next(); this.parseExpr(); }
         if (this.atId('c')) { this.next(); ptrKind = 'c'; }
         this.expect(']');
         const isConst = this.eatId('const');
         return ptr(this.parseType(), { isConst, ptrKind });
       }
       const len = this.parseExpr();
+      if (this.at(':')) { this.next(); this.parseExpr(); }
       this.expect(']');
       const isConst = this.eatId('const');
       const child = this.parseType();

@@ -84,6 +84,17 @@ pub fn useConstArrays(returnSize: *i32) i32 {
     return total;
 }
 
+// Sentinel-terminated pointers/slices/arrays must parse:  [*:0]T  [:0]T  [N:0]T
+pub fn sentinelSmoke(s: [*:0]const u8, returnSize: *i32) i32 {
+    const sl: [:0]const u8 = std.mem.span(s);
+    var buf: [8:0]u8 = undefined;
+    var i: usize = 0;
+    while (i < sl.len and i < 8) : (i += 1) buf[i] = sl[i];
+    buf[i] = 0;
+    returnSize.* = @intCast(sl.len);
+    return @intCast(buf[0]);
+}
+
 test "fixes" {
     var rs: i32 = 0;
     // 0..7 sum = 28, + getLast (6) = 34, list len 2
@@ -97,4 +108,7 @@ test "fixes" {
     try std.testing.expectEqual(@as(i32, 60), deferReturn());
     try std.testing.expectEqual(@as(i32, 26), useConstArrays(&rs));
     try std.testing.expectEqual(@as(i32, 2), rs);
+    // 'h' == 104, len 5
+    try std.testing.expectEqual(@as(i32, 104), sentinelSmoke("hello", &rs));
+    try std.testing.expectEqual(@as(i32, 5), rs);
 }

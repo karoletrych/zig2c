@@ -14,6 +14,7 @@ typedef struct Box Box;
 
 typedef struct { int *ptr; size_t len; } zig_slice_i32;
 typedef struct { char *ptr; size_t len; } zig_slice_u8;
+typedef struct { const char *ptr; size_t len; } zig_slice_c_u8;
 
 typedef struct { char value; bool has; } zig_opt_u8;
 typedef struct { int value; bool has; } zig_opt_i32;
@@ -85,6 +86,7 @@ void noop();
 bool errUnionHelper();
 int deferReturn();
 int useConstArrays(int* returnSize);
+int sentinelSmoke(const char* s, int* returnSize);
 
 int sumArrayField(int* returnSize) {
     Box b;
@@ -170,4 +172,18 @@ int useConstArrays(int* returnSize) {
     }
     (*returnSize) = (2);
     return total;
+}
+
+// Sentinel-terminated pointers/slices/arrays must parse:  [*:0]T  [:0]T  [N:0]T
+int sentinelSmoke(const char* s, int* returnSize) {
+    zig_slice_c_u8 sl = ((zig_slice_c_u8){ .ptr = (s), .len = strlen((const char*)(s)) });
+    char buf[8];
+    size_t i = 0;
+    while ((i < (sl).len) && (i < 8)) {
+        buf[i] = (sl).ptr[i];
+        i += 1;
+    }
+    buf[i] = 0;
+    (*returnSize) = ((int)((sl).len));
+    return ((int)(buf[0]));
 }

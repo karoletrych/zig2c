@@ -13,6 +13,8 @@ int main(void) {
     CHECK(deferReturn() == 60);
     CHECK(useConstArrays(&rs) == 26);
     CHECK(rs == 2);
+    CHECK(sentinelSmoke("hello", &rs) == 104);
+    CHECK(rs == 5);
     printf("fixes_smoke: OK\n");
     return 0;
 }
