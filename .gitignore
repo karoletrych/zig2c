@@ -2,6 +2,7 @@
 # ignore everything at the root, then re-include just these.
 /*
 !/.gitignore
+!/.gitattributes
 !/LICENSE
 !/README.md
 !/zig2c/

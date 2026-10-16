@@ -1,0 +1,10 @@
+# Normalise text files to LF in the repository; keep binaries binary.
+* text=auto
+*.js   text eol=lf
+*.zig  text eol=lf
+*.c    text eol=lf
+*.h    text eol=lf
+*.md   text eol=lf
+*.json text eol=lf
+*.exe  binary
+*.pdb  binary
