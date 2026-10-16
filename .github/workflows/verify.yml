@@ -30,7 +30,7 @@ jobs:
             exe: zig.exe
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install Zig 0.17.0
         shell: pwsh
