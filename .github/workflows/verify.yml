@@ -1,0 +1,54 @@
+name: verify
+
+# Every problem is checked three ways: the Zig must pass `zig test`, it must
+# translate, and the generated C must compile with `zig cc -Wall -Wextra` and
+# produce the same answers. This runs on Linux and Windows to prove the
+# translator is not Windows-specific.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    name: verify (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            archive: zig-x86_64-linux-0.17.0.tar.xz
+            dir: zig-x86_64-linux-0.17.0
+            exe: zig
+          - os: windows-latest
+            archive: zig-x86_64-windows-0.17.0.zip
+            dir: zig-x86_64-windows-0.17.0
+            exe: zig.exe
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Zig 0.17.0
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $archive = '${{ matrix.archive }}'
+          if (-not (Test-Path $archive)) {
+            Invoke-WebRequest -Uri "https://ziglang.org/download/0.17.0/$archive" -OutFile $archive
+          }
+          if ($archive.EndsWith('.zip')) { Expand-Archive -Path $archive -DestinationPath . -Force }
+          else { tar -xf $archive }
+          $zig = Join-Path $PWD '${{ matrix.dir }}/${{ matrix.exe }}'
+          if (-not (Test-Path $zig)) { throw "zig not found at $zig" }
+          "ZIG=$zig" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          & $zig version
+
+      - name: Verify every problem (zig test + generated C compiled and run)
+        run: node tools/verify.js --all
+
+      - name: Confirm study-plan coverage
+        run: node docs/check-lc150.js

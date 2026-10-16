@@ -47,6 +47,7 @@ function findZig() {
 }
 
 const ZIG = findZig();
+const EXE = process.platform === 'win32' ? 'test.exe' : 'test';
 const z2c = require(path.join(ROOT, 'zig2c', 'zig2c.js'));
 
 function run(cmd, args, cwd, env) {
@@ -80,8 +81,7 @@ const dim = (s) => `\x1b[2m${s}\x1b[0m`;
 const indent = (s) => s.trimEnd().split('\n').map((l) => '        ' + l).join('\n');
 const sha1 = (parts) => { const h = crypto.createHash('sha1'); for (const p of parts) h.update(p); return h.digest('hex'); };
 const readFileOr = (f, dflt) => { try { return fs.readFileSync(f); } catch { return Buffer.from(dflt); } };
-const base = (slot, kind) => path.join(os.tmpdir(), 'zig2c-cache', `w${slot}-${kind}`);
-const envFor = (slot, kind) => ({
+const base = (slot, kind) => path.join(os.tmpdir(), 'zig2c-cache', `w${slot}-${kind}`);const envFor = (slot, kind) => ({
   ...process.env,
   ZIG_GLOBAL_CACHE_DIR: base(slot, kind),
   ZIG_LOCAL_CACHE_DIR: base(slot, kind) + '-l',
@@ -119,7 +119,7 @@ async function verifyProblem(name, slot) {
     if (!driver) {
       ccP = run(ZIG, ['cc', '-std=c11', '-fsyntax-only', 'leetcode.c'], dir, envFor(slot, 'cc'));
     } else {
-      ccP = runRetry(ZIG, ['cc', '-O2', '-Wall', '-Wextra', '-std=c11', '-DZIG2C_LOCAL=1', '-o', 'test.exe', driver], dir, envFor(slot, 'cc'));
+      ccP = runRetry(ZIG, ['cc', '-O2', '-Wall', '-Wextra', '-std=c11', '-DZIG2C_LOCAL=1', '-o', EXE, driver], dir, envFor(slot, 'cc'));
     }
   } catch (err) {
     await testP;
@@ -140,7 +140,7 @@ async function verifyProblem(name, slot) {
   }
   if (cc.code !== 0) { ok = false; log(red('  [3/3] C compile FAILED')); log(indent(cc.out)); sweep(dir); return { ok, lines }; }
   const warns = cc.out.trim();
-  const rr = await runRetry(path.join(dir, 'test.exe'), [], dir, envFor(slot, 'cc'));
+  const rr = await runRetry(path.join(dir, EXE), [], dir, envFor(slot, 'cc'));
   if (rr.code !== 0) { ok = false; log(red('  [3/3] C run FAILED')); log(indent(rr.out)); }
   else log(green(`  [3/3] C run passed${warns ? ' (with warnings)' : ''}`));
   if (warns) log(indent(warns));

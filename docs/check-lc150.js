@@ -70,5 +70,7 @@ out.push('');
 out.push(`_${total} problems. Extras outside the plan (from LeetCode 75 and the`);
 out.push('translator smoke tests) also live under `problems/`._');
 out.push('');
-fs.writeFileSync(path.join(ROOT, 'docs', 'lc150-status.md'), out.join('\n'));
-console.log('wrote docs/lc150-status.md');
+if (process.argv.includes('--emit')) {
+  fs.writeFileSync(path.join(ROOT, 'docs', 'lc150-status.md'), out.join('\n'));
+  console.log('wrote docs/lc150-status.md');
+}

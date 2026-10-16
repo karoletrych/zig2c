@@ -1,5 +1,7 @@
 # Zig on LeetCode (via C)
 
+[![verify](https://github.com/karoletrych/zig2c/actions/workflows/verify.yml/badge.svg)](https://github.com/karoletrych/zig2c/actions/workflows/verify.yml)
+
 LeetCode has no Zig option, and `zig build-obj -ofmt=c` is a dead end: its C
 backend is a compiler *bootstrap* backend, so it emits SSA-style three-address
 code with numbered temporaries, `goto` label state machines, mangled names and a
