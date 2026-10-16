@@ -1,0 +1,18 @@
+# This working directory may contain unrelated files. Publish ONLY the project:
+# ignore everything at the root, then re-include just these.
+/*
+!/.gitignore
+!/LICENSE
+!/README.md
+!/zig2c/
+!/tools/
+!/docs/
+!/problems/
+
+# ...and never publish build artifacts, caches, or the Zig toolchain.
+.tools/
+**/test.exe
+**/*.pdb
+**/*.tmp0
+.zig-cache/
+**/.zig-cache/
